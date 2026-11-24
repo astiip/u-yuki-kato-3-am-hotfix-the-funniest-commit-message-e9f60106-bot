@@ -4,7 +4,7 @@
 // One git commit message (74 characters, one line) from a developer who has
 // just fixed production at 3 AM: the pager is finally quiet, production is
 // back — and the only lesson learned is that nothing was learned.
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 const LINE =
   "hotfix: production is back, the pager is quiet, and I have learned nothing";
@@ -22,4 +22,10 @@ if (
 const out = process.env.ENTRY_OUTPUT ?? "/output/entry.txt";
 mkdirSync(out.slice(0, out.lastIndexOf("/")) || ".", { recursive: true });
 writeFileSync(out, LINE, "utf8");
+
+// Verify the write landed byte-exact: the scorer reads this file verbatim,
+// so a partial or altered write must fail loudly instead of passing silently.
+if (readFileSync(out, "utf8") !== LINE) {
+  throw new Error("entry file does not match the commit line byte-for-byte");
+}
 console.log(LINE);
